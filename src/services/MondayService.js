@@ -18,18 +18,56 @@ class MondayService {
   }
 
   async getProjects() {
-    const query = `query {
-      boards(ids: [${BOARDS.PLANNING}]) {
-        items_page(limit: 100) {
-          items {
-            id
-            name
+    let allItems = [];
+    let cursor = null;
+
+    do {
+      let query;
+      if (!cursor) {
+        // Initial Query
+        query = `query {
+          boards(ids: [${BOARDS.PLANNING}]) {
+            items_page(limit: 500) {
+              cursor
+              items {
+                id
+                name
+              }
+            }
           }
-        }
+        }`;
+      } else {
+        // Pagination Query
+        query = `query {
+          next_items_page(cursor: "${cursor}", limit: 500) {
+            cursor
+            items {
+              id
+              name
+            }
+          }
+        }`;
       }
-    }`;
-    const data = await this.api(query);
-    return data.boards[0]?.items_page?.items || [];
+
+      const data = await this.api(query);
+
+      let pageData;
+      if (!cursor) {
+        pageData = data.boards[0]?.items_page;
+      } else {
+        pageData = data.next_items_page;
+      }
+
+      if (pageData) {
+        allItems = allItems.concat(pageData.items || []);
+        cursor = pageData.cursor;
+      } else {
+        cursor = null;
+      }
+
+    } while (cursor);
+
+    return allItems;
   }
 
   async getProjectDetails(projectId) {
@@ -44,13 +82,23 @@ class MondayService {
         }
       }
     }`;
+    console.log("getProjectDetails", query);
     const data = await this.api(query, { projectId: [projectId] });
     const item = data.items[0];
     if (!item) return null;
 
     const findLinkedIds = (colId) => {
       const col = item.column_values.find(c => c.id === colId);
-      return col?.linked_item_ids ? JSON.parse(col.linked_item_ids) : [];
+      if (!col?.linked_item_ids) return [];
+
+      if (Array.isArray(col.linked_item_ids)) return col.linked_item_ids;
+
+      try {
+        return JSON.parse(col.linked_item_ids);
+      } catch (e) {
+        console.error(`Failed to parse linked_item_ids for column ${colId}`, col.linked_item_ids, e);
+        return [];
+      }
     };
 
     return {
@@ -88,7 +136,19 @@ class MondayService {
     }`;
     const buildingData = await this.api(queryBuilding, { id: [buildingId] });
     const col = buildingData.items[0]?.column_values[0];
-    const apartmentIds = col?.linked_item_ids ? JSON.parse(col.linked_item_ids) : [];
+
+    let apartmentIds = [];
+    if (col?.linked_item_ids) {
+      if (Array.isArray(col.linked_item_ids)) {
+        apartmentIds = col.linked_item_ids;
+      } else {
+        try {
+          apartmentIds = JSON.parse(col.linked_item_ids);
+        } catch (e) {
+          console.error("Failed to parse apartment linked_item_ids", col.linked_item_ids, e);
+        }
+      }
+    }
 
     if (apartmentIds.length === 0) return [];
 
@@ -111,10 +171,11 @@ class MondayService {
     }));
   }
 
-  async createBuyerCommunication(formData) {
-    // formData: { projectName, projectId, buyerName, buyerPhone, buyerEmail, apartmentId, storageId, parkingId, commercialId }
+  async createBuyerCommunication(formData, buyerIds = []) {
+    // formData: { projectId, buildingId, apartmentId, storageId, parkingId, commercialId, buyers: ... }
 
-    const itemName = `פנייה חדשה - ${formData.buyerName}`;
+    const buyersName = formData.buyers.map(b => b.fullName).join(" & ");
+    const itemName = `פנייה חדשה - ${buyersName}`;
 
     const columnValues = {
       [COLUMNS.TARGET_PROJECT]: { item_ids: [parseInt(formData.projectId)] },
@@ -124,6 +185,11 @@ class MondayService {
     if (formData.storageId) columnValues[COLUMNS.TARGET_STORAGE] = { item_ids: [parseInt(formData.storageId)] };
     if (formData.parkingId) columnValues[COLUMNS.TARGET_PARKING] = { item_ids: [parseInt(formData.parkingId)] };
     if (formData.commercialId) columnValues[COLUMNS.TARGET_COMMERCIAL] = { item_ids: [parseInt(formData.commercialId)] };
+
+    // Connect Buyers
+    if (buyerIds && buyerIds.length > 0) {
+      columnValues[COLUMNS.TARGET_BUYERS_CONNECT] = { item_ids: buyerIds.map(id => parseInt(id)) };
+    }
 
     const query = `mutation($boardId: ID!, $itemName: String!, $columnValues: JSON!) {
       create_item(board_id: $boardId, item_name: $itemName, column_values: $columnValues) {
@@ -139,16 +205,29 @@ class MondayService {
   }
 
   async createBuyerRecord(formData) {
-    // Create record in "Buyers" (5088248229)
-    const query = `mutation($boardId: ID!, $itemName: String!) {
-      create_item(board_id: $boardId, item_name: $itemName) {
+    // Create record in "Buyers" (5088248229) for each buyer
+    const query = `mutation($boardId: ID!, $itemName: String!, $columnValues: JSON!) {
+      create_item(board_id: $boardId, item_name: $itemName, column_values: $columnValues) {
         id
       }
     }`;
-    return this.api(query, {
-      boardId: BOARDS.BUYERS,
-      itemName: formData.buyerName
+
+    const promises = formData.buyers.map(buyer => {
+      const columnValues = {
+        [COLUMNS.BUYER_ID_NUMBER]: buyer.idNumber,
+        [COLUMNS.BUYER_PHONE]: { phone: buyer.phone, countryShortName: "IL" },
+        [COLUMNS.BUYER_EMAIL]: { email: buyer.email, text: buyer.email }
+      };
+
+      return this.api(query, {
+        boardId: BOARDS.BUYERS,
+        itemName: buyer.fullName,
+        columnValues: JSON.stringify(columnValues)
+      });
     });
+
+    const results = await Promise.all(promises);
+    return results.map(res => res.create_item.id);
   }
 }
 

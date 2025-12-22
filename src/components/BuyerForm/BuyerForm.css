@@ -4,18 +4,33 @@
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     width: 100%;
+    gap: 24px;
     max-width: 600px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    flex-direction: column;
 }
 
 .buyer-form-title {
     font-size: 24px;
     font-weight: 600;
     color: #323338;
-    margin-bottom: 8px;
+    margin-bottom: 24px;
     text-align: center;
+}
+
+.input-label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #323338;
+}
+
+.input-label-small {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: #676879;
 }
 
 .buyer-form .success-message {
@@ -31,4 +46,19 @@
     font-size: 48px;
     margin-bottom: 16px;
     color: #00c875;
+}
+
+
+.buyer-form-card {
+    overflow: visible !important;
+}
+
+.buyer-form-card * {
+    overflow: visible;
+}
+
+.optional-fields-section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
 }

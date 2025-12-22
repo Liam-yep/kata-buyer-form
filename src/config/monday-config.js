@@ -20,4 +20,10 @@ export const COLUMNS = {
     TARGET_STORAGE: "board_relation_mkxn8bvt",
     TARGET_PARKING: "board_relation_mkxnbxjg",
     TARGET_COMMERCIAL: "board_relation_mkxn88c0",
+    TARGET_BUYERS_CONNECT: "board_relation_mky2jz2k", // Connect Buyer Comm -> Buyers
+
+    // Buyers Board Columns
+    BUYER_ID_NUMBER: "text_mky2rjvs",
+    BUYER_PHONE: "phone_mky21r5b",
+    BUYER_EMAIL: "email_mky2q0k3",
 };
