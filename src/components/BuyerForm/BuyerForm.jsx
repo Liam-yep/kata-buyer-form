@@ -11,6 +11,28 @@ const Context = {
     InputGap: 16
 }
 
+// Validation Helpers
+const isValidIsraeliID = (id) => {
+    id = String(id).trim();
+    if (id.length > 9 || isNaN(id)) return false;
+    id = id.padStart(9, '0');
+    return Array.from(id, Number).reduce((counter, digit, i) => {
+        const step = digit * ((i % 2) + 1);
+        return counter + (step > 9 ? step - 9 : step);
+    }) % 10 === 0;
+};
+
+const isValidPhone = (phone) => {
+    const re = /^(?:0(?:5[^7]|[2-4]|[8-9]))(?:-?\d{7})$|^(0(?:5[^7]|[2-4]|[8-9]))(?:\d{7})$/;
+    // Simple regex for Israeli numbers (05X-XXXXXXX or 05XXXXXXXX) and landlines
+    // Relaxed version: matches 9-10 digits starting with 0
+    return /^0\d{8,9}$|0\d{1,2}-?\d{7}$/.test(phone.replace(/\D/g, ''));
+};
+
+const isValidEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
+
 const BuyerForm = () => {
     const { monday, projects } = useMonday();
     const [loading, setLoading] = useState(true);
@@ -121,11 +143,21 @@ const BuyerForm = () => {
     };
 
     const handleSubmit = async () => {
-        // Validation: required fields + at least first buyer name and ID
-        const firstBuyer = formData.buyers[0];
-        if (!firstBuyer.fullName || !firstBuyer.idNumber || !formData.projectId || !formData.buildingId || !formData.apartmentId) {
+        // 1. Check selection fields
+        if (!formData.projectId || !formData.buildingId || !formData.apartmentId) {
             monday.execute("notice", {
-                message: "Please fill in all required fields (Project, Building, Apartment, Buyer Name, and ID)",
+                message: "Please select Project, Building, and Apartment",
+                type: "error",
+                timeout: 3000
+            });
+            return;
+        }
+
+        // 2. Check First Buyer specifically
+        const firstBuyer = formData.buyers[0];
+        if (!firstBuyer.fullName || !firstBuyer.idNumber) {
+            monday.execute("notice", {
+                message: "Please fill in Name and ID for Buyer #1",
                 type: "error",
                 timeout: 3000
             });
@@ -150,6 +182,42 @@ const BuyerForm = () => {
                 timeout: 3000
             });
             return;
+        }
+
+        // Validate formats (ID, Phone, Email)
+        for (let i = 0; i < formData.buyers.length; i++) {
+            const b = formData.buyers[i];
+            const hasData = b.fullName || b.idNumber || b.phone || b.email;
+
+            if (hasData) {
+                // ID Validation
+                if (!isValidIsraeliID(b.idNumber)) {
+                    monday.execute("notice", {
+                        message: `Invalid ID number for Buyer #${i + 1}`,
+                        type: "error",
+                        timeout: 3000
+                    });
+                    return;
+                }
+                // Phone Validation (if provided)
+                if (b.phone && !isValidPhone(b.phone)) {
+                    monday.execute("notice", {
+                        message: `Invalid phone number for Buyer #${i + 1}`,
+                        type: "error",
+                        timeout: 3000
+                    });
+                    return;
+                }
+                // Email Validation (if provided)
+                if (b.email && !isValidEmail(b.email)) {
+                    monday.execute("notice", {
+                        message: `Invalid email address for Buyer #${i + 1}`,
+                        type: "error",
+                        timeout: 3000
+                    });
+                    return;
+                }
+            }
         }
 
         setSubmitting(true);
@@ -317,7 +385,6 @@ const BuyerForm = () => {
                         <Box flex={1}>
                             <div className="input-label-small">שם מלא {index === 0 && <span className="required-asterisk">*</span>}</div>
                             <TextField
-                                placeholder="הכנס שם מלא"
                                 value={buyer.fullName}
                                 onChange={val => handleBuyerChange(index, 'fullName', val)}
                                 size={TextField.sizes.MEDIUM}
@@ -326,7 +393,6 @@ const BuyerForm = () => {
                         <Box flex={1}>
                             <div className="input-label-small">ת.ז. {index === 0 && <span className="required-asterisk">*</span>}</div>
                             <TextField
-                                placeholder="מספר ת.זהות"
                                 value={buyer.idNumber}
                                 onChange={val => handleBuyerChange(index, 'idNumber', val)}
                                 size={TextField.sizes.MEDIUM}
@@ -344,7 +410,6 @@ const BuyerForm = () => {
                         <Box flex={1}>
                             <div className="input-label-small">אימייל</div>
                             <TextField
-                                placeholder="mail@example.com"
                                 value={buyer.email}
                                 onChange={val => handleBuyerChange(index, 'email', val)}
                                 size={TextField.sizes.MEDIUM}

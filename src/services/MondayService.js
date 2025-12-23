@@ -204,30 +204,66 @@ class MondayService {
     });
   }
 
+  async findBuyerByTeudatZehut(idNumber) {
+    const query = `query {
+      items_page_by_column_values(
+        limit: 1,
+        board_id: ${BOARDS.BUYERS},
+        columns: [{column_id: "${COLUMNS.BUYER_ID_NUMBER}", column_values: ["${idNumber}"]}]
+      ) {
+        items {
+          id
+        }
+      }
+    }`;
+
+    try {
+      const data = await this.api(query);
+      const items = data.items_page_by_column_values?.items;
+      if (items && items.length > 0) {
+        return items[0].id; // Found existing buyer
+      }
+    } catch (e) {
+      console.error("Error finding buyer by ID", e);
+    }
+    return null;
+  }
+
   async createBuyerRecord(formData) {
     // Create record in "Buyers" (5088248229) for each buyer
-    const query = `mutation($boardId: ID!, $itemName: String!, $columnValues: JSON!) {
+    const createQuery = `mutation($boardId: ID!, $itemName: String!, $columnValues: JSON!) {
       create_item(board_id: $boardId, item_name: $itemName, column_values: $columnValues) {
         id
       }
     }`;
 
-    const promises = formData.buyers.map(buyer => {
+    const processBuyer = async (buyer) => {
+      // 1. Check if buyer exists
+      if (buyer.idNumber) {
+        const existingId = await this.findBuyerByTeudatZehut(buyer.idNumber);
+        if (existingId) {
+          console.log(`Buyer with ID ${buyer.idNumber} already exists: ${existingId}`);
+          return existingId;
+        }
+      }
+
+      // 2. Create new if not found
       const columnValues = {
         [COLUMNS.BUYER_ID_NUMBER]: buyer.idNumber,
         [COLUMNS.BUYER_PHONE]: { phone: buyer.phone, countryShortName: "IL" },
         [COLUMNS.BUYER_EMAIL]: { email: buyer.email, text: buyer.email }
       };
 
-      return this.api(query, {
+      const res = await this.api(createQuery, {
         boardId: BOARDS.BUYERS,
         itemName: buyer.fullName,
         columnValues: JSON.stringify(columnValues)
       });
-    });
+      return res.create_item.id;
+    };
 
-    const results = await Promise.all(promises);
-    return results.map(res => res.create_item.id);
+    const promises = formData.buyers.map(b => processBuyer(b));
+    return Promise.all(promises);
   }
 }
 
