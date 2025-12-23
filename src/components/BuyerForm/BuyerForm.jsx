@@ -121,11 +121,31 @@ const BuyerForm = () => {
     };
 
     const handleSubmit = async () => {
-        // Validation: required fields + at least first buyer name
+        // Validation: required fields + at least first buyer name and ID
         const firstBuyer = formData.buyers[0];
-        if (!firstBuyer.fullName || !formData.projectId || !formData.buildingId || !formData.apartmentId) {
+        if (!firstBuyer.fullName || !firstBuyer.idNumber || !formData.projectId || !formData.buildingId || !formData.apartmentId) {
             monday.execute("notice", {
-                message: "Please fill in all required fields (Project, Building, Apartment, and at least one Buyer Name)",
+                message: "Please fill in all required fields (Project, Building, Apartment, Buyer Name, and ID)",
+                type: "error",
+                timeout: 3000
+            });
+            return;
+        }
+
+        // Check for partial rows
+        const buyersValidation = formData.buyers.map((b, index) => {
+            const hasData = b.fullName || b.idNumber || b.phone || b.email;
+            const isComplete = b.fullName && b.idNumber;
+            if (hasData && !isComplete) {
+                return { valid: false, index };
+            }
+            return { valid: true, hasData };
+        });
+
+        const invalidRow = buyersValidation.find(v => !v.valid);
+        if (invalidRow) {
+            monday.execute("notice", {
+                message: `Please fill in Name and ID for Buyer #${invalidRow.index + 1}`,
                 type: "error",
                 timeout: 3000
             });
@@ -134,8 +154,8 @@ const BuyerForm = () => {
 
         setSubmitting(true);
         try {
-            // Filter out empty buyers before sending
-            const validBuyers = formData.buyers.filter(b => b.fullName.trim() !== "");
+            // Filter out empty buyers before sending (only send rows that have content)
+            const validBuyers = formData.buyers.filter(b => b.fullName || b.idNumber || b.phone || b.email);
 
             const submissionData = { ...formData, buyers: validBuyers };
 
@@ -193,7 +213,7 @@ const BuyerForm = () => {
 
             {/* Main Selection Group */}
             <Box marginBottom={Context.MarginBottom}>
-                <div className="input-label">פרויקט</div>
+                <div className="input-label">פרויקט <span className="required-asterisk">*</span></div>
                 <Dropdown
                     placeholder="בחר פרויקט"
                     options={projects}
@@ -209,7 +229,7 @@ const BuyerForm = () => {
 
             {formData.projectId && (
                 <Box marginBottom={Context.MarginBottom}>
-                    <div className="input-label">בניין</div>
+                    <div className="input-label">בניין <span className="required-asterisk">*</span></div>
                     <Dropdown
                         placeholder="בחר בניין"
                         options={buildings}
@@ -227,7 +247,7 @@ const BuyerForm = () => {
 
             {formData.buildingId && (
                 <Box marginBottom={Context.MarginBottom}>
-                    <div className="input-label">דירה</div>
+                    <div className="input-label">דירה <span className="required-asterisk">*</span></div>
                     <Dropdown
                         placeholder="בחר דירה"
                         options={apartments}
@@ -295,7 +315,7 @@ const BuyerForm = () => {
                 {formData.buyers.map((buyer, index) => (
                     <Flex key={index} gap={Context.InputGap} style={{ marginBottom: '16px' }} align="end">
                         <Box flex={1}>
-                            <div className="input-label-small">שם מלא {index === 0 && "*"}</div>
+                            <div className="input-label-small">שם מלא {index === 0 && <span className="required-asterisk">*</span>}</div>
                             <TextField
                                 placeholder="הכנס שם מלא"
                                 value={buyer.fullName}
@@ -304,7 +324,7 @@ const BuyerForm = () => {
                             />
                         </Box>
                         <Box flex={1}>
-                            <div className="input-label-small">ת.ז.</div>
+                            <div className="input-label-small">ת.ז. {index === 0 && <span className="required-asterisk">*</span>}</div>
                             <TextField
                                 placeholder="מספר ת.זהות"
                                 value={buyer.idNumber}

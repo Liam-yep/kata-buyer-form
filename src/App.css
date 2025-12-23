@@ -1,46 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@300;400;600;700&display=swap');
+
+body {
+  margin: 0;
+  padding: 0;
+  direction: rtl;
+  /* Enforce RTL globally */
+}
+
 .app-container {
-  font-family: "Figtree", Roboto, Rubik, Noto Kufi Arabic, Noto Sans Hebrew, sans-serif;
-  padding: 40px;
+  font-family: "Noto Sans Hebrew", sans-serif;
   background-color: #f6f9fc;
   min-height: 100vh;
   display: flex;
+  flex-direction: row;
+  /* Image Left, Form Right */
+  overflow: hidden;
+}
+
+.image-side {
+  flex: 1;
+  background-image: url('/bg-image.jpg');
+  /* Local Image */
+  background-size: cover;
+  background-position: center;
+  min-height: 100vh;
+  /* Optional: Overlay */
+  position: relative;
+}
+
+.form-side {
+  flex: 1;
+  max-width: 50%;
+  padding: 40px;
+  overflow-y: auto;
+  max-height: 100vh;
+  display: flex;
   justify-content: center;
   align-items: flex-start;
+  box-sizing: border-box;
 }
 
-.form-card {
-  background: white;
-  padding: 32px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  width: 100%;
-  max-width: 600px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
+@media (max-width: 900px) {
+  .app-container {
+    flex-direction: column-reverse;
+    /* Form on top/first, Image bottom/hidden on mobile */
+  }
 
-.form-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #323338;
-  margin-bottom: 8px;
-  text-align: center;
-}
+  .form-side {
+    max-width: 100%;
+    padding: 20px;
+  }
 
-.success-message {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24px;
-  padding: 48px 0;
+  .image-side {
+    min-height: 200px;
+    flex: none;
+    height: 200px;
+  }
 }
-
-.success-icon {
-    font-size: 48px;
-    margin-bottom: 16px;
-    color: #00c875;
-}
-
-/* Vibe overrides if necessary */

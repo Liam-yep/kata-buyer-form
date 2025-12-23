@@ -7,9 +7,12 @@ import BuyerForm from "./components/BuyerForm/BuyerForm";
 const App = () => {
   return (
     <div className="app-container">
-      <MondayProvider>
-        <BuyerForm />
-      </MondayProvider>
+      <div className="form-side">
+        <MondayProvider>
+          <BuyerForm />
+        </MondayProvider>
+      </div>
+      <div className="image-side"></div>
     </div>
   );
 };

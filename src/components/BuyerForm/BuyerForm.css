@@ -62,3 +62,10 @@
     flex-direction: column;
     gap: 24px;
 }
+
+.required-asterisk {
+    color: #e2445c;
+    /* Red color */
+    margin-right: 4px;
+    font-weight: bold;
+}
