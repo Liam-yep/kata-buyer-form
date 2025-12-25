@@ -156,9 +156,9 @@ const BuyerForm = () => {
 
         // 2. Check First Buyer specifically
         const firstBuyer = formData.buyers[0];
-        if (!firstBuyer.fullName || !firstBuyer.idNumber) {
+        if (!firstBuyer.fullName || !firstBuyer.idNumber || !firstBuyer.phone || !firstBuyer.email) {
             monday.execute("notice", {
-                message: "Please fill in Name and ID for Buyer #1",
+                message: "Please fill in Name, ID, Phone, and Email for Buyer #1",
                 type: "error",
                 timeout: 3000
             });
@@ -168,7 +168,7 @@ const BuyerForm = () => {
         // Check for partial rows
         const buyersValidation = formData.buyers.map((b, index) => {
             const hasData = b.fullName || b.idNumber || b.phone || b.email;
-            const isComplete = b.fullName && b.idNumber;
+            const isComplete = b.fullName && b.idNumber && b.phone && b.email;
             if (hasData && !isComplete) {
                 return { valid: false, index };
             }
@@ -178,7 +178,7 @@ const BuyerForm = () => {
         const invalidRow = buyersValidation.find(v => !v.valid);
         if (invalidRow) {
             monday.execute("notice", {
-                message: `Please fill in Name and ID for Buyer #${invalidRow.index + 1}`,
+                message: `Please fill in all fields (Name, ID, Phone, Email) for Buyer #${invalidRow.index + 1}`,
                 type: "error",
                 timeout: 3000
             });
@@ -400,7 +400,7 @@ const BuyerForm = () => {
                             />
                         </Box>
                         <Box flex={1}>
-                            <div className="input-label-small">טלפון</div>
+                            <div className="input-label-small">טלפון {index === 0 && <span className="required-asterisk">*</span>}</div>
                             <TextField
                                 placeholder="050-0000000"
                                 value={buyer.phone}
@@ -409,7 +409,7 @@ const BuyerForm = () => {
                             />
                         </Box>
                         <Box flex={1}>
-                            <div className="input-label-small">אימייל</div>
+                            <div className="input-label-small">אימייל {index === 0 && <span className="required-asterisk">*</span>}</div>
                             <TextField
                                 value={buyer.email}
                                 onChange={val => handleBuyerChange(index, 'email', val)}
