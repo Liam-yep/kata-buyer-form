@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import "@vibe/core/tokens";
 import "./BuyerForm.css";
 import { Button, Loader, TextField, Dropdown, Box, Flex, Icon } from "@vibe/core";
-import { Check, Add } from "@vibe/icons";
+import { Check, Add, Upload } from "@vibe/icons";
 import MondayService from "../../services/MondayService";
 import { useMonday } from "../../context/MondayContext";
 import { COLUMNS } from "../../config/monday-config";
@@ -436,9 +436,17 @@ const BuyerForm = () => {
                 <div className="input-label" style={{ marginBottom: '8px' }}>טופס הרשמה</div>
                 <input
                     type="file"
+                    id="registration-file-upload"
                     onChange={(e) => setRegistrationFile(e.target.files[0])}
                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                    style={{ display: 'none' }}
                 />
+                <label htmlFor="registration-file-upload" className="file-upload-container">
+                    <span className={`file-upload-text ${registrationFile ? 'has-file' : ''}`}>
+                        {registrationFile ? registrationFile.name : "בחר קובץ..."}
+                    </span>
+                    <Icon icon={Upload} className="file-upload-icon" />
+                </label>
             </div>
 
 

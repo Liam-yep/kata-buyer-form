@@ -69,3 +69,37 @@
     margin-right: 4px;
     font-weight: bold;
 }
+.file-upload-container {
+    border: 1px solid #c3c6d4;
+    border-radius: 4px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    background-color: #fff;
+    transition: border-color 0.2s;
+    height: 40px; /* Match standard input height */
+    box-sizing: border-box;
+}
+
+.file-upload-container:hover {
+    border-color: #323338;
+}
+
+.file-upload-text {
+    font-size: 14px;
+    color: #676879;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-upload-text.has-file {
+    color: #323338;
+}
+
+.file-upload-icon {
+    color: #676879;
+    font-size: 20px;
+}
