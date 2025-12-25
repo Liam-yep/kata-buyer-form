@@ -109,18 +109,43 @@ class MondayService {
     };
   }
 
-  async getItemsNames(itemIds) {
+  async getItemsNames(itemIds, statusColumnId = null) {
     if (!itemIds || itemIds.length === 0) return [];
 
-    // We fetch simple names for Buildings / Storage / Parking / Commercial
-    const query = `query($ids: [ID!]) {
-      items(ids: $ids) {
-        id
-        name
-      }
-    }`;
+    let query;
+    if (statusColumnId) {
+      // Fetch including status column
+      query = `query($ids: [ID!]) {
+        items(ids: $ids) {
+          id
+          name
+          column_values(ids: ["${statusColumnId}"]) {
+            text
+          }
+        }
+      }`;
+    } else {
+      // Simple fetch
+      query = `query($ids: [ID!]) {
+        items(ids: $ids) {
+          id
+          name
+        }
+      }`;
+    }
+
     const data = await this.api(query, { ids: itemIds });
-    return data.items || [];
+    let items = data.items || [];
+
+    if (statusColumnId) {
+      // Filter out "לא פנוי"
+      items = items.filter(item => {
+        const statusText = item.column_values[0]?.text; // text value of status
+        return statusText !== "לא פנוי";
+      });
+    }
+
+    return items;
   }
 
   async getApartmentOptions(buildingId) {
@@ -152,23 +177,34 @@ class MondayService {
 
     if (apartmentIds.length === 0) return [];
 
-    // 2. Fetch Apartment Number text
+    // 2. Fetch Apartment Number text and Status
     const queryApts = `query($ids: [ID!]) {
       items(ids: $ids) {
         id
         name 
-        column_values(ids: ["${COLUMNS.APARTMENT_NUMBER_TEXT}"]) {
+        column_values(ids: ["${COLUMNS.APARTMENT_NUMBER_TEXT}", "${COLUMNS.APARTMENT_STATUS}"]) {
+          id
           text
         }
       }
     }`;
     const aptData = await this.api(queryApts, { ids: apartmentIds });
 
-    return aptData.items.map(item => ({
-      id: item.id,
-      name: item.name, // Fallback
-      label: item.column_values[0]?.text || item.name // Prefer text column
-    }));
+    const filteredItems = aptData.items.filter(item => {
+      // Find status column
+      const statusCol = item.column_values.find(c => c.id === COLUMNS.APARTMENT_STATUS);
+      const statusText = statusCol?.text;
+      return statusText !== "לא פנוי";
+    });
+
+    return filteredItems.map(item => {
+      const nameCol = item.column_values.find(c => c.id === COLUMNS.APARTMENT_NUMBER_TEXT);
+      return {
+        id: item.id,
+        name: item.name, // Fallback
+        label: nameCol?.text || item.name // Prefer text column
+      };
+    });
   }
 
   async createBuyerCommunication(formData, buyerIds = []) {

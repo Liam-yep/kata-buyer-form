@@ -26,4 +26,10 @@ export const COLUMNS = {
     BUYER_ID_NUMBER: "text_mky2rjvs",
     BUYER_PHONE: "phone_mky21r5b",
     BUYER_EMAIL: "email_mky2q0k3",
+
+    // Status Columns for Filtering
+    APARTMENT_STATUS: "color_mkx64ks",
+    STORAGE_STATUS: "color_mkxthwyx",
+    PARKING_STATUS: "color_mkxtb83n",
+    COMMERCIAL_STATUS: "color_mkxtm2p2",
 };

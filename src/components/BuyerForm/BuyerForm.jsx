@@ -5,6 +5,7 @@ import { Button, Loader, TextField, Dropdown, Box, Flex, Icon } from "@vibe/core
 import { Check, Add } from "@vibe/icons";
 import MondayService from "../../services/MondayService";
 import { useMonday } from "../../context/MondayContext";
+import { COLUMNS } from "../../config/monday-config";
 
 const Context = {
     MarginBottom: 24,
@@ -91,10 +92,10 @@ const BuyerForm = () => {
             const details = await MondayService.getProjectDetails(option.value);
             if (details) {
                 const [builds, stors, parks, comms] = await Promise.all([
-                    MondayService.getItemsNames(details.buildingIds),
-                    MondayService.getItemsNames(details.storageIds),
-                    MondayService.getItemsNames(details.parkingIds),
-                    MondayService.getItemsNames(details.commercialIds)
+                    MondayService.getItemsNames(details.buildingIds), // No status for buildings
+                    MondayService.getItemsNames(details.storageIds, COLUMNS.STORAGE_STATUS),
+                    MondayService.getItemsNames(details.parkingIds, COLUMNS.PARKING_STATUS),
+                    MondayService.getItemsNames(details.commercialIds, COLUMNS.COMMERCIAL_STATUS)
                 ]);
 
                 setBuildings(builds.map(i => ({ label: i.name, value: i.id })));
