@@ -69,6 +69,11 @@ const BuyerForm = () => {
         setTimeout(() => setLoading(false), 1000);
     }, [projects]);
 
+    // Sorting Helper
+    const sortOptions = (options) => {
+        return [...options].sort((a, b) => a.label.localeCompare(b.label, 'he', { numeric: true }));
+    };
+
     const handleProjectChange = async (option) => {
         if (!option) {
             setFormData(prev => ({
@@ -100,10 +105,10 @@ const BuyerForm = () => {
                     MondayService.getItemsNames(details.commercialIds, COLUMNS.COMMERCIAL_STATUS)
                 ]);
 
-                setBuildings(builds.map(i => ({ label: i.name, value: i.id })));
-                setStorages(stors.map(i => ({ label: i.name, value: i.id })));
-                setParkings(parks.map(i => ({ label: i.name, value: i.id })));
-                setCommercials(comms.map(i => ({ label: i.name, value: i.id })));
+                setBuildings(sortOptions(builds.map(i => ({ label: i.name, value: i.id }))));
+                setStorages(sortOptions(stors.map(i => ({ label: i.name, value: i.id }))));
+                setParkings(sortOptions(parks.map(i => ({ label: i.name, value: i.id }))));
+                setCommercials(sortOptions(comms.map(i => ({ label: i.name, value: i.id }))));
             }
         } catch (e) {
             console.error("Failed to load project details", e);
@@ -124,7 +129,7 @@ const BuyerForm = () => {
 
         try {
             const apts = await MondayService.getApartmentOptions(option.value);
-            setApartments(apts.map(a => ({ label: a.label, value: a.id })));
+            setApartments(sortOptions(apts.map(a => ({ label: a.label, value: a.id }))));
         } catch (e) {
             console.error("Failed to load apartments", e);
         } finally {
@@ -293,7 +298,6 @@ const BuyerForm = () => {
                     value={formData.projectId ? projects.find(p => p.value === formData.projectId) : null}
                     size={Dropdown.sizes.LARGE}
                     searchable
-                    clearable={false}
                     menuPosition="absolute"
                     maxMenuHeight={250}
                 />
@@ -310,7 +314,6 @@ const BuyerForm = () => {
                         disabled={buildings.length === 0}
                         size={Dropdown.sizes.LARGE}
                         searchable
-                        clearable={false}
                         menuPosition="absolute"
                         maxMenuHeight={250}
                     />
@@ -328,7 +331,6 @@ const BuyerForm = () => {
                         disabled={apartments.length === 0}
                         size={Dropdown.sizes.LARGE}
                         searchable
-                        clearable={false}
                         menuPosition="absolute"
                         maxMenuHeight={250}
                     />
