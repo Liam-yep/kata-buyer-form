@@ -62,6 +62,8 @@ const BuyerForm = () => {
         ]
     });
 
+    const [registrationFile, setRegistrationFile] = useState(null);
+
     useEffect(() => {
         // Init loader handling
         setTimeout(() => setLoading(false), 1000);
@@ -232,7 +234,7 @@ const BuyerForm = () => {
             const createdBuyerIds = await MondayService.createBuyerRecord(submissionData);
 
             // 2. Create Communication linked to those buyers
-            await MondayService.createBuyerCommunication(submissionData, createdBuyerIds);
+            await MondayService.createBuyerCommunication(submissionData, createdBuyerIds, registrationFile);
             setSuccess(true);
         } catch (e) {
             console.error("Submission failed", e);
@@ -264,6 +266,7 @@ const BuyerForm = () => {
         setStorages([]);
         setParkings([]);
         setCommercials([]);
+        setRegistrationFile(null);
     };
 
     if (success) {
@@ -427,6 +430,15 @@ const BuyerForm = () => {
                 >
                     הוסף רוכש
                 </Button>
+            </div>
+
+            <div style={{ marginTop: '24px' }}>
+                <div className="input-label" style={{ marginBottom: '8px' }}>טופס הרשמה</div>
+                <input
+                    type="file"
+                    onChange={(e) => setRegistrationFile(e.target.files[0])}
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                />
             </div>
 
 

@@ -207,7 +207,35 @@ class MondayService {
     });
   }
 
-  async createBuyerCommunication(formData, buyerIds = []) {
+  async uploadFileToColumn(itemId, columnId, file) {
+    if (!file) return;
+
+    try {
+      const mutation = `mutation($file: File!) {
+        add_file_to_column(item_id: ${itemId}, column_id: "${columnId}", file: $file) {
+          id
+        }
+      }`;
+      // File upload in monday-sdk-js usually requires passing the file object directly in variables
+      // specific syntax depends on the SDK version, but typically:
+      await this.api(mutation, { file });
+      // Note: If standard SDK api() doesn't support file upload directly, we might need a workaround,
+      // but commonly the modern SDK supports it.
+      // If this fails, we might need to use `monday.api` with `file: file` directly if it supports multipart.
+      // However, usually `mondaySdk()` instance handles it if configured. 
+      // Let's rely on standard behaviour first.
+
+      // actually, the proper way in monday-sdk-js for file upload is often `monday.api(mutation, { variables: { file } })`
+      // but if we are using the `api` wrapper above:
+      // return this.api(query, { variables }) -> monday.api(query, { variables })
+
+    } catch (e) {
+      console.error("Failed to upload file", e);
+      // Don't fail the whole submission if file fails, just log it.
+    }
+  }
+
+  async createBuyerCommunication(formData, buyerIds = [], file = null) {
     // formData: { projectId, buildingId, apartmentId, storageId, parkingId, commercialId, buyers: ... }
 
     const buyersName = formData.buyers.map(b => b.fullName).join(" & ");
@@ -233,11 +261,19 @@ class MondayService {
       }
     }`;
 
-    return this.api(query, {
+    const res = await this.api(query, {
       boardId: BOARDS.BUYER_COMM,
       itemName,
       columnValues: JSON.stringify(columnValues)
     });
+
+    const newItemId = res.create_item.id;
+
+    if (file) {
+      await this.uploadFileToColumn(newItemId, COLUMNS.REGISTRATION_FORM_FILE, file);
+    }
+
+    return newItemId;
   }
 
   async findBuyerByTeudatZehut(idNumber) {

@@ -21,6 +21,7 @@ export const COLUMNS = {
     TARGET_PARKING: "board_relation_mkxnbxjg",
     TARGET_COMMERCIAL: "board_relation_mkxn88c0",
     TARGET_BUYERS_CONNECT: "board_relation_mky2jz2k", // Connect Buyer Comm -> Buyers
+    REGISTRATION_FORM_FILE: "file_mkxnr7zy",
 
     // Buyers Board Columns
     BUYER_ID_NUMBER: "text_mky2rjvs",
